@@ -6,6 +6,7 @@ import com.taskmaster.entity.PersonEntity;
 import com.taskmaster.entity.TaskEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Component
@@ -30,7 +31,11 @@ public class TaskMapper {
     public RegisterTaskResponseDto taskEntityToRegisterTaskResponseDto(TaskEntity taskEntity){
         RegisterTaskResponseDto registerTaskResponseDto=new RegisterTaskResponseDto();
 
-        registerTaskResponseDto.setTimeLeft(LocalDateTime.of(taskEntity.getExpirationDate(),taskEntity.getExpirationTime()));
+        LocalDateTime expiration=LocalDateTime.of(taskEntity.getExpirationDate(),taskEntity.getExpirationTime());
+        Duration d = Duration.between(taskEntity.getCreatedAt(), expiration);
+        long secondsLeft = Math.max(d.getSeconds(), 0);
+        registerTaskResponseDto.setSecondsTimeLeft(secondsLeft);
+
         return registerTaskResponseDto;
     }
 

@@ -5,10 +5,13 @@ import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
 import com.taskmaster.entity.TaskEntity;
 import com.taskmaster.mapper.task.TaskMapper;
 import com.taskmaster.repository.TaskRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,14 +21,21 @@ public class RegisterTaskService {
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
 
-    public RegisterTaskResponseDto registerTask(RegisterTaskRequestDto registerTaskRequestDto){
+    @Transactional
+    public RegisterTaskResponseDto registerTask(String personId,RegisterTaskRequestDto registerTaskRequestDto){
 try {
-    TaskEntity taskEntity = taskMapper.taskRequestDtoToTaskEntity(registerTaskRequestDto);
+
+    if(validateTitle(registerTaskRequestDto.getTitle(),personId)){
+        log.warn("No pueden existir 2 tareas pendientes con el mismo nombre");
+        throw new RuntimeException("No pueden existir 2 tareas pendientes con el mismo nombre");
+    }
+
+    TaskEntity taskEntity = taskMapper.taskRequestDtoToTaskEntity(registerTaskRequestDto,personId);
     TaskEntity taskSaved = taskRepository.save(taskEntity);
 
     RegisterTaskResponseDto registerTaskResponseDto = taskMapper.taskEntityToRegisterTaskResponseDto(taskSaved);
     registerTaskResponseDto.setSuccessMessage("Tarea agregada con exito");
-    log.error("Se agregó la tarea");
+    log.info("Se agregó la tarea");
 
     return registerTaskResponseDto;
 }catch(Exception exception){
@@ -35,6 +45,13 @@ try {
 
 }
     }
+
+    private boolean validateTitle(String title, String personId) {
+       return taskRepository.existsByTitleAndPersonIdAndDoneFalse(title,UUID.fromString(personId));
+
+
+    }
+
 
 
 

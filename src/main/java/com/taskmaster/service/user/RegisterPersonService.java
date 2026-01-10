@@ -23,6 +23,10 @@ public class RegisterPersonService {
     public RegisterPersonResponseDto registerUser(RegisterPersonRequestDto registerPersonRequestDto){
 try {
     PersonEntity personEntity = personMapper.registerPersonRequestDtoToPersonEntity(registerPersonRequestDto);
+    if(validateEmailUnique(registerPersonRequestDto.getEmail())){
+        log.warn(registerPersonRequestDto.getEmail()+" ya esta en uso");
+        throw new RuntimeException("El email ya esta en uso");
+    }
     personRepository.save(personEntity);
 
     return new RegisterPersonResponseDto("Usuario registrado de forma exitosa");
@@ -30,10 +34,10 @@ try {
     log.error("ocurrio un error al registrar al usuario "+exception);
     throw new RuntimeException("No se pudo registrar al usuario");
 }
+    }
 
-
-
-
+    private boolean validateEmailUnique(String email){
+        return personRepository.existsByEmail(email);
     }
 
 }

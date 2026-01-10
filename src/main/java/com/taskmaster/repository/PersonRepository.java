@@ -9,6 +9,6 @@ import java.util.UUID;
 @Repository
 public interface PersonRepository extends JpaRepository<PersonEntity,UUID> {
 
-
+    boolean existsByEmail(String email);
 
 }

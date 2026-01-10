@@ -19,9 +19,9 @@ public class TaskController {
     private final RegisterTaskService registerTaskService;
     private final MarkTaskService markTaskService;
 
-    @PostMapping("/register")
-    public ResponseEntity<RegisterTaskResponseDto> postTask(@RequestBody RegisterTaskRequestDto registerTaskRequestDto){
-        RegisterTaskResponseDto response=registerTaskService.registerTask(registerTaskRequestDto);
+    @PostMapping("/{personId}/register")
+    public ResponseEntity<RegisterTaskResponseDto> postTask(@PathVariable String personId,@RequestBody RegisterTaskRequestDto registerTaskRequestDto){
+        RegisterTaskResponseDto response=registerTaskService.registerTask(personId,registerTaskRequestDto);
         return ResponseEntity.status(201).body(response);
     }
 

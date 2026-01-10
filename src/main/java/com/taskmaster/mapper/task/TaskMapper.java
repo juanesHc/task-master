@@ -8,11 +8,12 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 public class TaskMapper {
 
-    public TaskEntity taskRequestDtoToTaskEntity(RegisterTaskRequestDto registerTaskRequestDto){
+    public TaskEntity taskRequestDtoToTaskEntity(RegisterTaskRequestDto registerTaskRequestDto, String personId){
         TaskEntity taskEntity=new TaskEntity();
         PersonEntity personEntity=new PersonEntity();
 
@@ -22,7 +23,7 @@ public class TaskMapper {
         taskEntity.setExpirationDate(registerTaskRequestDto.getExpirationDate());
         taskEntity.setDone(false);
 
-        personEntity.setId(registerTaskRequestDto.getPersonId());
+        personEntity.setId(UUID.fromString(personId));
         taskEntity.setPerson(personEntity);
 
         return taskEntity;

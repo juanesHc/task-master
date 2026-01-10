@@ -10,6 +10,6 @@ import java.util.UUID;
 @Repository
 public interface TaskRepository extends JpaRepository<TaskEntity,UUID> {
 
-
+    boolean existsByTitleAndPersonIdAndDoneFalse(String title, UUID personId);
 
 }

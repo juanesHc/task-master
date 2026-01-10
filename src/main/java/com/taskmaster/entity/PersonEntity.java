@@ -1,8 +1,7 @@
 package com.taskmaster.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import com.taskmaster.entity.enums.AuthEnum;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,10 +21,11 @@ public class PersonEntity extends BaseEntity{
 
     private String password;
 
-    @OneToMany(mappedBy = "person")
-    private List<NotificationEntity> notifications;
+    @Enumerated(EnumType.STRING)
+    private AuthEnum provider;
 
-
-
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private RoleEntity role;
 
 }

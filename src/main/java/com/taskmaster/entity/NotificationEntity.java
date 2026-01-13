@@ -1,9 +1,7 @@
 package com.taskmaster.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.taskmaster.entity.enums.NotificationEnum;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,4 +18,9 @@ public class NotificationEntity extends BaseEntity{
     private PersonEntity person;
 
     private String notificationMessage;
+    
+    private boolean readed;
+
+    @Enumerated(EnumType.STRING)
+    private NotificationEnum notificationType;
 }

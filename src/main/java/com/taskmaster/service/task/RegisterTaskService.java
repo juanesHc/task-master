@@ -1,10 +1,15 @@
 package com.taskmaster.service.task;
 
+import com.taskmaster.dto.notification.NotificationDto;
 import com.taskmaster.dto.task.request.RegisterTaskRequestDto;
 import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
+import com.taskmaster.entity.PersonEntity;
 import com.taskmaster.entity.TaskEntity;
+import com.taskmaster.entity.enums.NotificationEnum;
 import com.taskmaster.mapper.task.TaskMapper;
+import com.taskmaster.repository.PersonRepository;
 import com.taskmaster.repository.TaskRepository;
+import com.taskmaster.service.notification.RegisterNotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,8 +23,11 @@ import java.util.UUID;
 public class RegisterTaskService {
 
     private static final Logger log = LoggerFactory.getLogger(RegisterTaskService.class);
+
+    private final PersonRepository personRepository;
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
+    private final RegisterNotificationService registerNotificationService;
 
     @Transactional
     public RegisterTaskResponseDto registerTask(String personId,RegisterTaskRequestDto registerTaskRequestDto){
@@ -32,6 +40,8 @@ try {
 
     TaskEntity taskEntity = taskMapper.taskRequestDtoToTaskEntity(registerTaskRequestDto,personId);
     TaskEntity taskSaved = taskRepository.save(taskEntity);
+
+    addNotification(personId,taskSaved);
 
     RegisterTaskResponseDto registerTaskResponseDto = taskMapper.taskEntityToRegisterTaskResponseDto(taskSaved);
     registerTaskResponseDto.setSuccessMessage("Tarea agregada con exito");
@@ -50,6 +60,17 @@ try {
        return taskRepository.existsByTitleAndPersonIdAndDoneFalse(title,UUID.fromString(personId));
 
 
+    }
+
+    private void addNotification(String personId, TaskEntity taskEntity){
+        PersonEntity personEntity=personRepository.findById(UUID.fromString(personId)).orElseThrow(()->new RuntimeException("No sé encontró el usuario"));
+
+        NotificationDto notificationDto =new NotificationDto();
+        notificationDto.setNotificationType(NotificationEnum.TAREA);
+        notificationDto.setPersonId(personId);
+        notificationDto.setMessage("Hola "+personEntity.getGivenName()+",Registraste la tarea con titulo "+taskEntity.getTitle()+" de forma exitosa");
+
+        registerNotificationService.registerNotification(String.valueOf(personId), notificationDto);
     }
 
 

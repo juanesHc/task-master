@@ -1,0 +1,4 @@
+INSERT INTO role (created_at,updated_at,id, type)
+VALUES
+  (NOW(),NOW(),gen_random_uuid(), 'ADMINISTRADOR'),
+  (NOW(),NOW(),gen_random_uuid(), 'USUARIO');

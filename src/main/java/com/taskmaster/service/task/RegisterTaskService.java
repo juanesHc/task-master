@@ -1,6 +1,6 @@
 package com.taskmaster.service.task;
 
-import com.taskmaster.dto.notification.NotificationDto;
+import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.dto.task.request.RegisterTaskRequestDto;
 import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
 import com.taskmaster.entity.PersonEntity;
@@ -65,12 +65,12 @@ try {
     private void addNotification(String personId, TaskEntity taskEntity){
         PersonEntity personEntity=personRepository.findById(UUID.fromString(personId)).orElseThrow(()->new RuntimeException("No sé encontró el usuario"));
 
-        NotificationDto notificationDto =new NotificationDto();
-        notificationDto.setNotificationType(NotificationEnum.TAREA);
-        notificationDto.setPersonId(personId);
-        notificationDto.setMessage("Hola "+personEntity.getGivenName()+",Registraste la tarea con titulo "+taskEntity.getTitle()+" de forma exitosa");
+        RegisterNotificationRequestDto registerNotificationRequestDto =new RegisterNotificationRequestDto();
+        registerNotificationRequestDto.setNotificationType(NotificationEnum.TAREA);
+        registerNotificationRequestDto.setPersonId(personId);
+        registerNotificationRequestDto.setMessage("Hola "+personEntity.getGivenName()+",Registraste la tarea con titulo "+taskEntity.getTitle()+" de forma exitosa");
 
-        registerNotificationService.registerNotification(String.valueOf(personId), notificationDto);
+        registerNotificationService.registerNotification(String.valueOf(personId), registerNotificationRequestDto);
     }
 
 

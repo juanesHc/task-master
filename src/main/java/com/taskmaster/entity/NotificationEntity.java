@@ -19,7 +19,7 @@ public class NotificationEntity extends BaseEntity{
 
     private String notificationMessage;
     
-    private boolean readed;
+    private boolean read;
 
     @Enumerated(EnumType.STRING)
     private NotificationEnum notificationType;

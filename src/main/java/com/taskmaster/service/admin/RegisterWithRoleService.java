@@ -2,7 +2,7 @@ package com.taskmaster.service.admin;
 
 import com.taskmaster.dto.admin.request.RegisterWithRoleRequestDto;
 import com.taskmaster.dto.admin.response.RegisterWithRoleResponseDto;
-import com.taskmaster.dto.notification.NotificationDto;
+import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.entity.PersonEntity;
 import com.taskmaster.entity.enums.NotificationEnum;
 import com.taskmaster.mapper.admin.AdminMapper;
@@ -52,12 +52,12 @@ public class RegisterWithRoleService {
     private void addNotification(PersonEntity personEntity){
         UUID personId=personRepository.findIdByEmail(personEntity.getEmail());
 
-        NotificationDto notificationDto =new NotificationDto();
-        notificationDto.setNotificationType(NotificationEnum.REGISTRO);
-        notificationDto.setPersonId(String.valueOf(personId));
-        notificationDto.setMessage("Hola "+personEntity.getGivenName()+", Te has registrado de forma exitosa");
+        RegisterNotificationRequestDto registerNotificationRequestDto =new RegisterNotificationRequestDto();
+        registerNotificationRequestDto.setNotificationType(NotificationEnum.REGISTRO);
+        registerNotificationRequestDto.setPersonId(String.valueOf(personId));
+        registerNotificationRequestDto.setMessage("Hola "+personEntity.getGivenName()+", Te has registrado de forma exitosa");
 
-        registerNotificationService.registerNotification(String.valueOf(personId), notificationDto);
+        registerNotificationService.registerNotification(String.valueOf(personId), registerNotificationRequestDto);
     }
 
 }

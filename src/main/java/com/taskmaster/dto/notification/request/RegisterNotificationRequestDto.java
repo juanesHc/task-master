@@ -1,4 +1,4 @@
-package com.taskmaster.dto.notification;
+package com.taskmaster.dto.notification.request;
 
 import com.taskmaster.entity.enums.NotificationEnum;
 import lombok.AllArgsConstructor;
@@ -10,9 +10,10 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class NotificationDto {
+public class RegisterNotificationRequestDto {
 
     private String personId;
     private NotificationEnum notificationType;
     private String message;
+
 }

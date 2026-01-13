@@ -1,6 +1,6 @@
 package com.taskmaster.service.user;
 
-import com.taskmaster.dto.notification.NotificationDto;
+import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.dto.user.request.RegisterPersonRequestDto;
 import com.taskmaster.dto.user.response.RegisterPersonResponseDto;
 import com.taskmaster.entity.PersonEntity;
@@ -50,12 +50,12 @@ try {
     private void addNotification(PersonEntity personEntity){
         UUID personId=personRepository.findIdByEmail(personEntity.getEmail());
 
-        NotificationDto notificationDto =new NotificationDto();
-        notificationDto.setNotificationType(NotificationEnum.REGISTRO);
-        notificationDto.setPersonId(String.valueOf(personId));
-        notificationDto.setMessage("Hola "+personEntity.getGivenName()+", Te has registrado de forma exitosa");
+        RegisterNotificationRequestDto registerNotificationRequestDto =new RegisterNotificationRequestDto();
+        registerNotificationRequestDto.setNotificationType(NotificationEnum.REGISTRO);
+        registerNotificationRequestDto.setPersonId(String.valueOf(personId));
+        registerNotificationRequestDto.setMessage("Hola "+personEntity.getGivenName()+", Te has registrado de forma exitosa");
 
-        registerNotificationService.registerNotification(String.valueOf(personId), notificationDto);
+        registerNotificationService.registerNotification(String.valueOf(personId), registerNotificationRequestDto);
     }
 
 }

@@ -1,6 +1,6 @@
 package com.taskmaster.service.notification;
 
-import com.taskmaster.dto.notification.NotificationDto;
+import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.entity.NotificationEntity;
 import com.taskmaster.mapper.notification.NotificationMapper;
 import com.taskmaster.repository.NotificationRepository;
@@ -17,9 +17,9 @@ public class RegisterNotificationService {
     private final NotificationMapper notificationMapper;
     private final NotificationRepository notificationRepository;
 
-    public void registerNotification(String personId, NotificationDto notificationDto){
+    public void registerNotification(String personId, RegisterNotificationRequestDto registerNotificationRequestDto){
         try {
-            NotificationEntity notificationEntity = notificationMapper.notificationDtoToNotificationEntity(notificationDto);
+            NotificationEntity notificationEntity = notificationMapper.notificationDtoToNotificationEntity(registerNotificationRequestDto);
 
             notificationRepository.save(notificationEntity);
             log.info("Notificación registrada con exito");

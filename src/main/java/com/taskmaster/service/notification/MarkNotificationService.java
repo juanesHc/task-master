@@ -17,7 +17,7 @@ public class MarkNotificationService {
 
     private final NotificationRepository notificationRepository;
 
-    public void markNotificationAsViewed(UUID notificationId){
+    public void markNotificationAsRead(UUID notificationId){
 
 
         NotificationEntity notificationEntity = notificationRepository.findById(notificationId)
@@ -25,7 +25,7 @@ public class MarkNotificationService {
                         "No se encontró una tarea con el id: " + notificationId
                 ));
 
-        notificationEntity.setReaded(true);
+        notificationEntity.setRead(true);
         notificationRepository.save(notificationEntity);
 
     }

@@ -26,10 +26,8 @@ public class RetrieveTasksService {
             RetrieveTaskFilterRequestDto filter,String personId
     ) {
 
-
-        Specification<TaskEntity> specification = TaskSpecification.buildTaskSpecification(filter);
-
         List<RetrieveTaskFilterResponseDto> responseDtos=new ArrayList<>();
+
         Specification<TaskEntity> spec = Specification
                 .where(TaskSpecification.belongsToUser(UUID.fromString(personId)))
 

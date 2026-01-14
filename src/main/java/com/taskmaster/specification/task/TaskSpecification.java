@@ -25,12 +25,30 @@ public class TaskSpecification {
             LocalDate expiration
     ) {
         return (root, query, cb) ->
-                cb.between(root.get("createdAt"), createdAt, expiration);
+                cb.between(
+                        root.get("createdAt"),
+                        createdAt.atStartOfDay(),
+                        expiration.atTime(23, 59, 59)
+                );
     }
 
     public static Specification<TaskEntity> belongsToUser(UUID personId) {
         return (root, query, cb) ->
                 cb.equal(root.get("person").get("id"), personId);
+    }
+
+    private static Specification<TaskEntity> hasCreatedAt(LocalDate createdAt) {
+        return (root, query, cb) ->
+                cb.between(
+                        root.get("createdAt"),
+                        createdAt.atStartOfDay(),
+                        createdAt.atTime(23, 59, 59)
+                );
+    }
+
+    private static Specification<TaskEntity> hasExpiration(LocalDate expiration) {
+        return (root, query, cb) ->
+                cb.equal(root.get("expirationDate"), expiration);
     }
 
 
@@ -51,6 +69,13 @@ public class TaskSpecification {
                             taskFilterRequestDto.getExpiration()
                     )
             );
+        }
+        if (taskFilterRequestDto.getCreatedAt() != null) {
+            taskSpec = taskSpec.and(hasCreatedAt(taskFilterRequestDto.getCreatedAt()));
+        }
+
+        if (taskFilterRequestDto.getExpiration() != null) {
+            taskSpec = taskSpec.and(hasExpiration(taskFilterRequestDto.getExpiration()));
         }
 
         if (taskFilterRequestDto.getDone() != null) {

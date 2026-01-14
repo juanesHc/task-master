@@ -2,11 +2,13 @@ package com.taskmaster.mapper.task;
 
 import com.taskmaster.dto.task.request.RegisterTaskRequestDto;
 import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
+import com.taskmaster.dto.task.response.RetrieveTaskFilterResponseDto;
 import com.taskmaster.entity.PersonEntity;
 import com.taskmaster.entity.TaskEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -38,6 +40,26 @@ public class TaskMapper {
         registerTaskResponseDto.setSecondsTimeLeft(secondsLeft);
 
         return registerTaskResponseDto;
+    }
+
+    public RetrieveTaskFilterResponseDto taskEntityToRetrieveFilterTaskResponseDto(TaskEntity taskEntity){
+        RetrieveTaskFilterResponseDto retrieveTaskFilterResponseDto=new RetrieveTaskFilterResponseDto();
+
+        retrieveTaskFilterResponseDto.setTitle(taskEntity.getTitle());
+        retrieveTaskFilterResponseDto.setDescription(taskEntity.getDescription());
+        retrieveTaskFilterResponseDto.setDone(taskEntity.isDone());
+        retrieveTaskFilterResponseDto.setExpiration(taskEntity.getExpirationDate());
+
+        LocalDate createdAtDate= LocalDate.from(taskEntity.getCreatedAt());
+        retrieveTaskFilterResponseDto.setCreatedAt(createdAtDate);
+
+        LocalDateTime expiration=LocalDateTime.of(taskEntity.getExpirationDate(),taskEntity.getExpirationTime());
+        Duration d = Duration.between(taskEntity.getCreatedAt(), expiration);
+        long secondsLeft = Math.max(d.getSeconds(), 0);
+
+        retrieveTaskFilterResponseDto.setSecondsTimeLeft(secondsLeft);
+
+        return retrieveTaskFilterResponseDto;
     }
 
 }

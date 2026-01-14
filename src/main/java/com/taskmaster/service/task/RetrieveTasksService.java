@@ -27,13 +27,13 @@ public class RetrieveTasksService {
     ) {
 
 
-        Specification<TaskEntity> specification = TaskSpecification.getSpecification(filter);
+        Specification<TaskEntity> specification = TaskSpecification.buildTaskSpecification(filter);
 
         List<RetrieveTaskFilterResponseDto> responseDtos=new ArrayList<>();
         Specification<TaskEntity> spec = Specification
                 .where(TaskSpecification.belongsToUser(UUID.fromString(personId)))
 
-                .and(TaskSpecification.getSpecification(filter));
+                .and(TaskSpecification.buildTaskSpecification(filter));
 
         List<TaskEntity> filteredTasks = taskRepository.findAll(spec);
         filteredTasks.forEach(taskEntity -> responseDtos.add(taskMapper.taskEntityToRetrieveFilterTaskResponseDto(taskEntity)));

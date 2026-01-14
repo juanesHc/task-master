@@ -5,7 +5,6 @@ import com.taskmaster.entity.TaskEntity;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.UUID;
 
 public class TaskSpecification {
@@ -37,7 +36,7 @@ public class TaskSpecification {
 
 
 
-    public static Specification<TaskEntity> getSpecification(RetrieveTaskFilterRequestDto taskFilterRequestDto){
+    public static Specification<TaskEntity> buildTaskSpecification(RetrieveTaskFilterRequestDto taskFilterRequestDto){
 
         Specification<TaskEntity> taskSpec=Specification.where(null);
 

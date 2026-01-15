@@ -29,9 +29,13 @@ public class UsersSpecification {
                 );
     }
 
-    private static Specification<PersonEntity> createdAfter(LocalDate date) {
+    private static Specification<PersonEntity> hasCreatedAt(LocalDate createdAt) {
         return (root, query, cb) ->
-                cb.greaterThanOrEqualTo(root.get("createdAt"), date);
+                cb.between(
+                        root.get("createdAt"),
+                        createdAt.atStartOfDay(),
+                        createdAt.atTime(23, 59, 59)
+                );
     }
 
 
@@ -43,6 +47,18 @@ public class UsersSpecification {
     private static Specification<PersonEntity> hasProvider(String provider) {
         return (root, query, cb) ->
                 cb.equal(cb.lower(root.get("provider")), provider.toLowerCase());
+    }
+
+    private static Specification<PersonEntity> createdBetween(
+            LocalDate sourceDate,
+            LocalDate targetDate
+    ) {
+        return (root, query, cb) ->
+                cb.between(
+                        root.get("createdAt"),
+                        sourceDate.atStartOfDay(),
+                        targetDate.atTime(23, 59, 59)
+                );
     }
 
     public static Specification<PersonEntity> buildUserSpecification(RetrieveUsersFilterRequestDto retrieveUsersFilterRequestDto){
@@ -64,10 +80,20 @@ public class UsersSpecification {
         if(retrieveUsersFilterRequestDto.getRoleName()!=null && !retrieveUsersFilterRequestDto.getRoleName().isBlank()){
             personEntitySpecification=personEntitySpecification.and(hasRole(retrieveUsersFilterRequestDto.getRoleName()));
         }
+
         if (retrieveUsersFilterRequestDto.getCreatedAt() != null) {
-            personEntitySpecification =
-                    personEntitySpecification.and(createdAfter(retrieveUsersFilterRequestDto.getCreatedAt()));
+            personEntitySpecification = personEntitySpecification.and(hasCreatedAt(retrieveUsersFilterRequestDto.getCreatedAt()));
         }
+
+        if (retrieveUsersFilterRequestDto.getSourceDate() != null && retrieveUsersFilterRequestDto.getTargetDate() != null) {
+            personEntitySpecification = personEntitySpecification.and(
+                    createdBetween(
+                            retrieveUsersFilterRequestDto.getSourceDate(),
+                            retrieveUsersFilterRequestDto.getTargetDate()
+                    )
+            );
+        }
+
 
         return personEntitySpecification;
     }

@@ -17,5 +17,7 @@ public class RetrieveUsersFilterRequestDto {
     private String provider;
     private String roleName;
     private LocalDate createdAt;
+    private LocalDate targetDate;
+    private LocalDate sourceDate;
 
 }

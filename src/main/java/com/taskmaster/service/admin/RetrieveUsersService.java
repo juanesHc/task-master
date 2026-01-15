@@ -25,8 +25,6 @@ public class RetrieveUsersService {
             RetrieveUsersFilterRequestDto filter
     ) {
 
-        Specification<PersonEntity> specification = UsersSpecification.buildUserSpecification(filter);
-
         List<RetrieveUsersFilterResponseDto> responseDtos=new ArrayList<>();
         Specification<PersonEntity> spec = (UsersSpecification.buildUserSpecification(filter));
 

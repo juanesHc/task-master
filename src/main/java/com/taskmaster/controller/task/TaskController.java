@@ -9,11 +9,10 @@ import com.taskmaster.service.task.MarkTaskService;
 import com.taskmaster.service.task.RegisterTaskService;
 import com.taskmaster.service.task.RetrieveTasksService;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.query.Page;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Pageable;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,8 +42,5 @@ public class TaskController {
        List<RetrieveTaskFilterResponseDto> response= retrieveTasksService.retrieveTasks(retrieveTaskFilterRequestDto,personId);
         return ResponseEntity.status(201).body(response);
     }
-
-
-
 
 }

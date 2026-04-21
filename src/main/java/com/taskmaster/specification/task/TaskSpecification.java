@@ -4,85 +4,46 @@ import com.taskmaster.dto.task.request.RetrieveTaskFilterRequestDto;
 import com.taskmaster.entity.TaskEntity;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 public class TaskSpecification {
 
-    private static Specification<TaskEntity> hasTitle(String title){
-        return ((root, query, cb) ->
-                cb.like(
-                        cb.lower(root.get("title")),"%"+title.toLowerCase()+"%") );
-    }
-
-    private static Specification<TaskEntity> isDone(Boolean done) {
-        return (root, query, cb) ->
-                cb.equal(root.get("done"), done);
-    }
-
-    private static Specification<TaskEntity> createdBetween(
-            LocalDate createdAt,
-            LocalDate expiration
-    ) {
-        return (root, query, cb) ->
-                cb.between(
-                        root.get("createdAt"),
-                        createdAt.atStartOfDay(),
-                        expiration.atTime(23, 59, 59)
-                );
+    private TaskSpecification() {
     }
 
     public static Specification<TaskEntity> belongsToUser(UUID personId) {
-        return (root, query, cb) ->
-                cb.equal(root.get("person").get("id"), personId);
+        return (root, query, cb) -> cb.equal(root.get("personEntity").get("id"), personId);
     }
 
-    private static Specification<TaskEntity> hasCreatedAt(LocalDate createdAt) {
-        return (root, query, cb) ->
-                cb.between(
-                        root.get("createdAt"),
-                        createdAt.atStartOfDay(),
-                        createdAt.atTime(23, 59, 59)
-                );
+    public static Specification<TaskEntity> buildTaskSpecification(RetrieveTaskFilterRequestDto filter) {
+        Specification<TaskEntity> spec = Specification.where(null);
+        if (filter == null) {
+            return spec;
+        }
+        if (filter.getTitle() != null && !filter.getTitle().isBlank()) {
+            spec = spec.and((root, q, cb) -> cb.like(cb.lower(root.get("title")), "%" + filter.getTitle().toLowerCase() + "%"));
+        }
+        if (filter.getDone() != null) {
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("done"), filter.getDone()));
+        }
+        if (filter.getStatus() != null) {
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), filter.getStatus()));
+        }
+        if (filter.getTaskType() != null) {
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("taskType"), filter.getTaskType()));
+        }
+        if (filter.getCreatedAt() != null) {
+            spec = spec.and((root, q, cb) -> cb.between(
+                    root.get("createdAt"),
+                    filter.getCreatedAt().atStartOfDay(),
+                    filter.getCreatedAt().atTime(23, 59, 59)));
+        }
+        if (filter.getDeadlineOn() != null) {
+            spec = spec.and((root, q, cb) -> cb.between(
+                    root.get("deadlineAt"),
+                    filter.getDeadlineOn().atStartOfDay(),
+                    filter.getDeadlineOn().atTime(23, 59, 59)));
+        }
+        return spec;
     }
-
-    private static Specification<TaskEntity> hasExpiration(LocalDate expiration) {
-        return (root, query, cb) ->
-                cb.equal(root.get("expirationDate"), expiration);
-    }
-
-
-
-
-    public static Specification<TaskEntity> buildTaskSpecification(RetrieveTaskFilterRequestDto taskFilterRequestDto){
-
-        Specification<TaskEntity> taskSpec=Specification.where(null);
-
-        if (taskFilterRequestDto.getTitle() != null && !taskFilterRequestDto.getTitle().isBlank()) {
-            taskSpec = taskSpec.and(hasTitle(taskFilterRequestDto.getTitle()));
-        }
-
-        if (taskFilterRequestDto.getCreatedAt() != null && taskFilterRequestDto.getExpiration() != null) {
-            taskSpec = taskSpec.and(
-                    createdBetween(
-                            taskFilterRequestDto.getCreatedAt(),
-                            taskFilterRequestDto.getExpiration()
-                    )
-            );
-        }
-        if (taskFilterRequestDto.getCreatedAt() != null) {
-            taskSpec = taskSpec.and(hasCreatedAt(taskFilterRequestDto.getCreatedAt()));
-        }
-
-        if (taskFilterRequestDto.getExpiration() != null) {
-            taskSpec = taskSpec.and(hasExpiration(taskFilterRequestDto.getExpiration()));
-        }
-
-        if (taskFilterRequestDto.getDone() != null) {
-            taskSpec = taskSpec.and(isDone(taskFilterRequestDto.getDone()));
-        }
-
-        return taskSpec;
-    }
-
 }

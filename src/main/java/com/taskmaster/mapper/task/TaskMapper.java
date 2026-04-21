@@ -3,63 +3,45 @@ package com.taskmaster.mapper.task;
 import com.taskmaster.dto.task.request.RegisterTaskRequestDto;
 import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
 import com.taskmaster.dto.task.response.RetrieveTaskFilterResponseDto;
-import com.taskmaster.entity.PersonEntity;
+import com.taskmaster.entity.PeriodicityEntity;
 import com.taskmaster.entity.TaskEntity;
-import org.springframework.stereotype.Component;
+import com.taskmaster.entity.enums.TaskStatusEnum;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.Named;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-@Component
-public class TaskMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+public interface TaskMapper {
 
-    public TaskEntity taskRequestDtoToTaskEntity(RegisterTaskRequestDto registerTaskRequestDto, String personId){
-        TaskEntity taskEntity=new TaskEntity();
-        PersonEntity personEntity=new PersonEntity();
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "personEntity", ignore = true)
+    @Mapping(target = "periodicity", ignore = true)
+    @Mapping(target = "status", expression = "java(com.taskmaster.entity.enums.TaskStatusEnum.PENDING)")
+    @Mapping(target = "done", constant = "false")
+    @Mapping(target = "nextRunAt", ignore = true)
+    @Mapping(target = "lastCompletedAt", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    TaskEntity fromRegisterRequest(RegisterTaskRequestDto dto);
 
-        taskEntity.setDescription(registerTaskRequestDto.getDescription());
-        taskEntity.setTitle(registerTaskRequestDto.getTitle());
-        taskEntity.setExpirationTime(registerTaskRequestDto.getExpirationTime());
-        taskEntity.setExpirationDate(registerTaskRequestDto.getExpirationDate());
-        taskEntity.setDone(false);
+    @Mapping(target = "secondsTimeLeft", source = "task", qualifiedByName = "secondsUntilDeadline")
+    @Mapping(target = "successMessage", ignore = true)
+    RegisterTaskResponseDto toRegisterResponse(TaskEntity task);
 
-        personEntity.setId(UUID.fromString(personId));
-        taskEntity.setPerson(personEntity);
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "secondsTimeLeft", source = ".", qualifiedByName = "secondsUntilDeadline")
+    RetrieveTaskFilterResponseDto toFilterResponse(TaskEntity task);
 
-        return taskEntity;
+    @Named("secondsUntilDeadline")
+    default long secondsUntilDeadline(TaskEntity task) {
+        if (task == null || task.getDeadlineAt() == null) {
+            return 0L;
+        }
+        long seconds = Duration.between(LocalDateTime.now(), task.getDeadlineAt()).getSeconds();
+        return Math.max(seconds, 0L);
     }
-
-    public RegisterTaskResponseDto taskEntityToRegisterTaskResponseDto(TaskEntity taskEntity){
-        RegisterTaskResponseDto registerTaskResponseDto=new RegisterTaskResponseDto();
-
-        LocalDateTime expiration=LocalDateTime.of(taskEntity.getExpirationDate(),taskEntity.getExpirationTime());
-        Duration d = Duration.between(taskEntity.getCreatedAt(), expiration);
-        long secondsLeft = Math.max(d.getSeconds(), 0);
-        registerTaskResponseDto.setSecondsTimeLeft(secondsLeft);
-
-        return registerTaskResponseDto;
-    }
-
-    public RetrieveTaskFilterResponseDto taskEntityToRetrieveFilterTaskResponseDto(TaskEntity taskEntity){
-        RetrieveTaskFilterResponseDto retrieveTaskFilterResponseDto=new RetrieveTaskFilterResponseDto();
-
-        retrieveTaskFilterResponseDto.setTitle(taskEntity.getTitle());
-        retrieveTaskFilterResponseDto.setDescription(taskEntity.getDescription());
-        retrieveTaskFilterResponseDto.setDone(taskEntity.isDone());
-        retrieveTaskFilterResponseDto.setExpiration(taskEntity.getExpirationDate());
-
-        LocalDate createdAtDate= LocalDate.from(taskEntity.getCreatedAt());
-        retrieveTaskFilterResponseDto.setCreatedAt(createdAtDate);
-
-        LocalDateTime expiration=LocalDateTime.of(taskEntity.getExpirationDate(),taskEntity.getExpirationTime());
-        Duration d = Duration.between(taskEntity.getCreatedAt(), expiration);
-        long secondsLeft = Math.max(d.getSeconds(), 0);
-
-        retrieveTaskFilterResponseDto.setSecondsTimeLeft(secondsLeft);
-
-        return retrieveTaskFilterResponseDto;
-    }
-
 }

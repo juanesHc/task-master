@@ -3,77 +3,87 @@ package com.taskmaster.service.task;
 import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.dto.task.request.RegisterTaskRequestDto;
 import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
+import com.taskmaster.entity.PeriodicityEntity;
 import com.taskmaster.entity.PersonEntity;
 import com.taskmaster.entity.TaskEntity;
-import com.taskmaster.entity.enums.NotificationEnum;
+import com.taskmaster.entity.enums.NotificationChannelEnum;
+import com.taskmaster.entity.enums.NotificationTypeEnum;
+import com.taskmaster.entity.enums.TaskStatusEnum;
+import com.taskmaster.entity.enums.TaskTypeEnum;
+import com.taskmaster.exception.BusinessRuleException;
+import com.taskmaster.exception.ResourceNotFoundException;
 import com.taskmaster.mapper.task.TaskMapper;
 import com.taskmaster.repository.PersonRepository;
 import com.taskmaster.repository.TaskRepository;
 import com.taskmaster.service.notification.RegisterNotificationService;
-import jakarta.transaction.Transactional;
+import com.taskmaster.service.scheduler.ReminderScheduler;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterTaskService {
 
-    private static final Logger log = LoggerFactory.getLogger(RegisterTaskService.class);
-
     private final PersonRepository personRepository;
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
+    private final CronEvaluator cronEvaluator;
     private final RegisterNotificationService registerNotificationService;
+    private final ReminderScheduler reminderScheduler;
 
     @Transactional
-    public RegisterTaskResponseDto registerTask(String personId,RegisterTaskRequestDto registerTaskRequestDto){
-try {
+    public RegisterTaskResponseDto registerTask(UUID personId, RegisterTaskRequestDto request) {
+        PersonEntity person = personRepository.findById(personId)
+                .orElseThrow(() -> new ResourceNotFoundException("Person not found: " + personId));
 
-    if(validateTitle(registerTaskRequestDto.getTitle(),personId)){
-        log.warn("No pueden existir 2 tareas pendientes con el mismo nombre");
-        throw new RuntimeException("No pueden existir 2 tareas pendientes con el mismo nombre");
+        if (taskRepository.existsByTitleAndPersonEntity_IdAndDoneFalse(request.getTitle(), personId)) {
+            throw new BusinessRuleException("An open task with the same title already exists");
+        }
+
+        TaskEntity task = taskMapper.fromRegisterRequest(request);
+        task.setPersonEntity(person);
+        task.setStatus(TaskStatusEnum.PENDING);
+
+        if (task.getTaskType() == TaskTypeEnum.PERIODIC) {
+            requireCron(request);
+            cronEvaluator.validate(request.getCronExpression(), request.getTimezone());
+
+            PeriodicityEntity periodicity = new PeriodicityEntity();
+            periodicity.setCronExpression(request.getCronExpression());
+            periodicity.setTimezone(request.getTimezone() == null ? "UTC" : request.getTimezone());
+            periodicity.setTaskEntity(task);
+            task.setPeriodicity(periodicity);
+
+            task.setNextRunAt(cronEvaluator.nextAfter(
+                    request.getCronExpression(), request.getTimezone(), task.getDeadlineAt()));
+        }
+
+        TaskEntity saved = taskRepository.save(task);
+
+        RegisterNotificationRequestDto welcome = new RegisterNotificationRequestDto();
+        welcome.setPersonId(personId.toString());
+        welcome.setTaskId(saved.getId().toString());
+        welcome.setNotificationType(NotificationTypeEnum.TASK_CREATED);
+        welcome.setChannel(NotificationChannelEnum.IN_APP);
+        welcome.setMessage("Task '" + saved.getTitle() + "' scheduled for " + saved.getDeadlineAt());
+        registerNotificationService.registerNotification(personId.toString(), welcome);
+
+        reminderScheduler.scheduleFor(saved);
+
+        RegisterTaskResponseDto response = taskMapper.toRegisterResponse(saved);
+        response.setSuccessMessage("Task registered successfully");
+        log.info("Task {} registered for person {}", saved.getId(), personId);
+        return response;
     }
 
-    TaskEntity taskEntity = taskMapper.taskRequestDtoToTaskEntity(registerTaskRequestDto,personId);
-    TaskEntity taskSaved = taskRepository.save(taskEntity);
-
-    addNotification(personId,taskSaved);
-
-    RegisterTaskResponseDto registerTaskResponseDto = taskMapper.taskEntityToRegisterTaskResponseDto(taskSaved);
-    registerTaskResponseDto.setSuccessMessage("Tarea agregada con exito");
-    log.info("Se agregó la tarea");
-
-    return registerTaskResponseDto;
-}catch(Exception exception){
-
-    log.error("No se pudo agregar la tarea");
-    throw new RuntimeException("No se pudo agregar la tarea "+exception);
-
-}
+    private void requireCron(RegisterTaskRequestDto request) {
+        if (request.getCronExpression() == null || request.getCronExpression().isBlank()) {
+            throw new BusinessRuleException("Periodic tasks require a cronExpression");
+        }
     }
-
-    private boolean validateTitle(String title, String personId) {
-       return taskRepository.existsByTitleAndPersonIdAndDoneFalse(title,UUID.fromString(personId));
-
-
-    }
-
-    private void addNotification(String personId, TaskEntity taskEntity){
-        PersonEntity personEntity=personRepository.findById(UUID.fromString(personId)).orElseThrow(()->new RuntimeException("No sé encontró el usuario"));
-
-        RegisterNotificationRequestDto registerNotificationRequestDto =new RegisterNotificationRequestDto();
-        registerNotificationRequestDto.setNotificationType(NotificationEnum.TAREA);
-        registerNotificationRequestDto.setPersonId(personId);
-        registerNotificationRequestDto.setMessage("Hola "+personEntity.getGivenName()+",Registraste la tarea con titulo "+taskEntity.getTitle()+" de forma exitosa");
-
-        registerNotificationService.registerNotification(String.valueOf(personId), registerNotificationRequestDto);
-    }
-
-
-
-
 }

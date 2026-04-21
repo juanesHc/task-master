@@ -3,31 +3,24 @@ package com.taskmaster.mapper.notification;
 import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.dto.notification.response.RetrieveNotificationResponseDto;
 import com.taskmaster.entity.NotificationEntity;
-import com.taskmaster.entity.PersonEntity;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
-import java.util.UUID;
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+public interface NotificationMapper {
 
-@Component
-public class NotificationMapper {
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "personEntity", ignore = true)
+    @Mapping(target = "taskEntity", ignore = true)
+    @Mapping(target = "notificationMessage", source = "message")
+    @Mapping(target = "read", constant = "false")
+    @Mapping(target = "sent", constant = "false")
+    @Mapping(target = "sentAt", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    NotificationEntity fromRequest(RegisterNotificationRequestDto dto);
 
-    public NotificationEntity notificationDtoToNotificationEntity(RegisterNotificationRequestDto registerNotificationRequestDto){
-
-        NotificationEntity notificationEntity=new NotificationEntity();
-        PersonEntity personEntity=new PersonEntity();
-
-        personEntity.setId(UUID.fromString(registerNotificationRequestDto.getPersonId()));
-
-        notificationEntity.setNotificationMessage(registerNotificationRequestDto.getMessage());
-        notificationEntity.setNotificationType(registerNotificationRequestDto.getNotificationType());
-        notificationEntity.setRead(false);
-        notificationEntity.setPerson(personEntity);
-
-        return notificationEntity;
-    }
-
-    public RetrieveNotificationResponseDto notificationEntityToRetrieveNotificationResponseDto(NotificationEntity notificationEntity){
-        return new RetrieveNotificationResponseDto(notificationEntity.getNotificationMessage());
-    }
-
+    @Mapping(target = "type", source = "notificationType")
+    RetrieveNotificationResponseDto toResponse(NotificationEntity entity);
 }

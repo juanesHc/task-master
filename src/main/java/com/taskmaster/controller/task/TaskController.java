@@ -5,42 +5,45 @@ import com.taskmaster.dto.task.request.RetrieveTaskFilterRequestDto;
 import com.taskmaster.dto.task.response.MarkTaskResponseDto;
 import com.taskmaster.dto.task.response.RegisterTaskResponseDto;
 import com.taskmaster.dto.task.response.RetrieveTaskFilterResponseDto;
+import com.taskmaster.security.CurrentUserService;
 import com.taskmaster.service.task.MarkTaskService;
 import com.taskmaster.service.task.RegisterTaskService;
 import com.taskmaster.service.task.RetrieveTasksService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/task")
+@RequestMapping("/api/tasks")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('USER','ADMIN')")
 public class TaskController {
 
     private final RegisterTaskService registerTaskService;
     private final MarkTaskService markTaskService;
     private final RetrieveTasksService retrieveTasksService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/{personId}/register")
-    public ResponseEntity<RegisterTaskResponseDto> postTask(@PathVariable String personId,@RequestBody RegisterTaskRequestDto registerTaskRequestDto){
-        RegisterTaskResponseDto response=registerTaskService.registerTask(personId,registerTaskRequestDto);
+    @PostMapping
+    public ResponseEntity<RegisterTaskResponseDto> register(@Valid @RequestBody RegisterTaskRequestDto request) {
+        UUID personId = currentUserService.requireId();
+        RegisterTaskResponseDto response = registerTaskService.registerTask(personId, request);
         return ResponseEntity.status(201).body(response);
     }
 
     @PatchMapping("/{taskId}/done")
-    public ResponseEntity<MarkTaskResponseDto> markAsDone(@PathVariable UUID taskId) {
-        markTaskService. markTaskAsDone(taskId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<MarkTaskResponseDto> markDone(@PathVariable UUID taskId) {
+        return ResponseEntity.ok(markTaskService.markTaskAsDone(taskId));
     }
 
-    @GetMapping("/{personId}/retrieve")
-    public ResponseEntity<List<RetrieveTaskFilterResponseDto>> getTasks(@PathVariable String personId,RetrieveTaskFilterRequestDto retrieveTaskFilterRequestDto){
-       List<RetrieveTaskFilterResponseDto> response= retrieveTasksService.retrieveTasks(retrieveTaskFilterRequestDto,personId);
-        return ResponseEntity.status(201).body(response);
+    @GetMapping
+    public ResponseEntity<List<RetrieveTaskFilterResponseDto>> list(RetrieveTaskFilterRequestDto filter) {
+        UUID personId = currentUserService.requireId();
+        return ResponseEntity.ok(retrieveTasksService.retrieveTasks(filter, personId));
     }
-
 }

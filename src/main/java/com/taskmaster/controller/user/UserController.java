@@ -1,28 +1,26 @@
 package com.taskmaster.controller.user;
 
-import com.taskmaster.dto.user.request.RegisterPersonRequestDto;
-import com.taskmaster.dto.user.response.RegisterPersonResponseDto;
-import com.taskmaster.service.user.RegisterPersonService;
+import com.taskmaster.dto.user.response.PersonProfileDto;
+import com.taskmaster.security.CurrentUserService;
+import com.taskmaster.service.user.PersonQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    private final RegisterPersonService registerPersonService;
+    private final PersonQueryService personQueryService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/register")
-    public ResponseEntity<RegisterPersonResponseDto> postUser(@RequestBody RegisterPersonRequestDto registerPersonRequestDto){
-
-        RegisterPersonResponseDto response=registerPersonService.registerUser(registerPersonRequestDto);
-
-        return ResponseEntity.status(201).body(response);
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<PersonProfileDto> me() {
+        return ResponseEntity.ok(personQueryService.findById(currentUserService.requireId()));
     }
-
 }

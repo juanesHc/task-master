@@ -2,31 +2,53 @@ package com.taskmaster.service.notification;
 
 import com.taskmaster.dto.notification.request.RegisterNotificationRequestDto;
 import com.taskmaster.entity.NotificationEntity;
+import com.taskmaster.entity.PersonEntity;
+import com.taskmaster.entity.TaskEntity;
+import com.taskmaster.exception.RegisterNotificationException;
+import com.taskmaster.exception.RetrievePeopleException;
 import com.taskmaster.mapper.notification.NotificationMapper;
 import com.taskmaster.repository.NotificationRepository;
+import com.taskmaster.repository.PersonRepository;
+import com.taskmaster.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterNotificationService {
 
-    private static final Logger log = LoggerFactory.getLogger(RegisterNotificationService.class);
     private final NotificationMapper notificationMapper;
     private final NotificationRepository notificationRepository;
+    private final PersonRepository personRepository;
+    private final TaskRepository taskRepository;
 
-    public void registerNotification(String personId, RegisterNotificationRequestDto registerNotificationRequestDto){
+    @Transactional
+    public NotificationEntity registerNotification(String personId, RegisterNotificationRequestDto request) {
         try {
-            NotificationEntity notificationEntity = notificationMapper.notificationDtoToNotificationEntity(registerNotificationRequestDto);
+            PersonEntity person = personRepository.findById(UUID.fromString(personId))
+                    .orElseThrow(() -> new RetrievePeopleException("Person not found: " + personId));
 
-            notificationRepository.save(notificationEntity);
-            log.info("Notificación registrada con exito");
-        }catch (Exception exception){
-            log.error("Ocurrió un error registrando la notificación :"+exception);
-            throw new RuntimeException();
+            NotificationEntity entity = notificationMapper.fromRequest(request);
+            entity.setPersonEntity(person);
+            if (request.getTaskId() != null && !request.getTaskId().isBlank()) {
+                TaskEntity task = taskRepository.findById(UUID.fromString(request.getTaskId()))
+                        .orElse(null);
+                entity.setTaskEntity(task);
+            }
+
+            NotificationEntity saved = notificationRepository.save(entity);
+            log.info("Notification {} registered for person {}", saved.getId(), personId);
+            return saved;
+        } catch (RetrievePeopleException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Failed to register notification", ex);
+            throw new RegisterNotificationException("Could not register notification: " + ex.getMessage());
         }
     }
-
 }

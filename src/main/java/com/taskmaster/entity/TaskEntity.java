@@ -1,35 +1,57 @@
 package com.taskmaster.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.taskmaster.entity.enums.TaskStatusEnum;
+import com.taskmaster.entity.enums.TaskTypeEnum;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Entity
-@Table(name="task")
+@Table(name = "task", indexes = {
+        @Index(name = "ix_task_person", columnList = "person_id"),
+        @Index(name = "ix_task_deadline", columnList = "deadline_at"),
+        @Index(name = "ix_task_next_run", columnList = "next_run_at")
+})
 @Getter
 @Setter
 public class TaskEntity extends BaseEntity {
 
+    @Column(nullable = false)
     private String title;
 
-    @ManyToOne
-    @JoinColumn(name = "person_id")
-    private PersonEntity person;
-
+    @Column(length = 500)
     private String description;
 
-    private LocalDate expirationDate;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "person_id", nullable = false)
+    private PersonEntity personEntity;
 
-    private LocalTime expirationTime;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskTypeEnum taskType = TaskTypeEnum.ONE_TIME;
 
-    private boolean done;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskStatusEnum status = TaskStatusEnum.PENDING;
 
+    @Column(name = "deadline_at", nullable = false)
+    private LocalDateTime deadlineAt;
 
+    @Column(name = "next_run_at")
+    private LocalDateTime nextRunAt;
+
+    @Column(name = "last_completed_at")
+    private LocalDateTime lastCompletedAt;
+
+    @OneToOne(mappedBy = "taskEntity", cascade = CascadeType.ALL, orphanRemoval = true, optional = true)
+    private PeriodicityEntity periodicity;
+
+    @Column(nullable = false)
+    private boolean done = false;
+
+    public boolean isPeriodic() {
+        return taskType == TaskTypeEnum.PERIODIC;
+    }
 }

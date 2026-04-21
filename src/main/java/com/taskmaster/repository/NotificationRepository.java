@@ -8,10 +8,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRepository extends JpaRepository< NotificationEntity,UUID> {
+public interface NotificationRepository extends JpaRepository<NotificationEntity, UUID> {
 
-    List<NotificationEntity> findByReadAndPersonId(boolean read,UUID personId);
+    List<NotificationEntity> findByReadAndPersonEntity_Id(boolean read, UUID personId);
 
-    List<NotificationEntity> findByPersonId(UUID personId);
-
+    List<NotificationEntity> findByPersonEntity_IdOrderByCreatedAtDesc(UUID personId);
 }
